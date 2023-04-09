@@ -20,14 +20,21 @@ $(function (){
     });
 });
 
-function showGlobalModal(uri, width){
+function showGlobalModal(uri, width, filter){
     let currentURL = window.location.href;
     let splitURL = currentURL.split("?");
-    let url = uri;
+    let url = splitURL[1] === undefined ? uri
+        : uri + '?' + splitURL[1];
+    if(filter !== undefined && filter !== ''){
+        if(url.includes('?')){
+            url = url + '&'+filter+'=' + $('#'+filter).val();
+        }else{
+            url = url + '?'+filter+'=' + $('#'+filter).val();
+        }
+    }
     $.ajax({
-        url:
-            splitURL[1] === undefined ? url
-                : url + '?' + splitURL[1],
+        url: url
+            ,
         method: "GET",
         success: function (data){
             $('#modal-form').find('.modal-body').html(data);
@@ -43,8 +50,9 @@ function showGlobalModal(uri, width){
 $(document).on('click', '.btn-modal', function(e){
     e.preventDefault();
     var url = $(this).data('url');
+    var filter = $(this).data('filter');
     var width = $(this).data('size') === undefined ? 'mw-650px' : $(this).data('size');
-    showGlobalModal(url, width);
+    showGlobalModal(url, width, filter);
 });
 
 $(document).on('click', '#btnExport', function(e){
@@ -84,6 +92,14 @@ $(document).on('click', '#btnExport', function(e){
     let completeURL = url + '/'+type+'?filter=' + filter + '&filterMonth=' + filterMonth + '&filterYear=' + filterYear + '&combo_1=' + combo_1 + '&combo_2=' + combo_2 + '&combo_3=' + combo_3 + '&combo_4=' + combo_4 + '&combo_5=' + combo_5 + '&combo_6=' + combo_6 + '&combo_7=' + combo_7 + '&combo_8=' + combo_8 + '&combo_9=' + combo_9 + '&combo_10=' + combo_10 + '&filter_1=' + filter_1 + '&filter_2=' + filter_2 + '&filter_3=' + filter_3 + '&filter_4=' + filter_4 + '&filter_5=' + filter_5 + '&filter_6=' + filter_6 + '&filter_7=' + filter_7 + '&filter_8=' + filter_8 + '&filter_9=' + filter_9 + '&filter_10=' + filter_10;
     window.open(completeURL, '_blank');
 });
+
+$('#form-edit').on('click', '#btnSubmitForm', function(){
+    let btnSubmit = this;
+    btnSubmit.setAttribute('data-kt-indicator', 'on');
+    btnSubmit.disabled = true;
+    $('#form-edit').submit();
+});
+
 
 $('#modal-form').on('click', '#btnSubmit', function(){
     let btnSubmit = this;
@@ -130,11 +146,26 @@ $('#modal-form').on('click', '#btnSubmit', function(){
                 }
                 }).then(function() {
                     window.location=result.url;
+                    // downloadFile(result.download, 'Log Import Data 2022-01-17 10:00:00.log');
                 });
             }
         },
     });
 });
+
+// function downloadFile(url, fileName) {
+//     fetch(url, { method: 'get', mode: 'no-cors', referrerPolicy: 'no-referrer' })
+//         .then(res => res.blob())
+//         .then(res => {
+//             const aElement = document.createElement('a');
+//             aElement.setAttribute('download', fileName);
+//             const href = URL.createObjectURL(res);
+//             aElement.href = href;
+//             aElement.setAttribute('target', '_blank');
+//             aElement.click();
+//             URL.revokeObjectURL(href);
+//         });
+// };
 
 $('#modal-form').on('hidden.bs.modal', function () {
     $('select').select2({
@@ -187,34 +218,9 @@ $(".input-time").flatpickr(
     }
 );
 
-// getSub = function getSub(value, child, route) {
-//     alert('test');
-//     route = route == undefined ? 'subMasters' : route;
-//     var pathArray = window.location.pathname.split( '/' );
-//     var parentId = value;
-//     if (parentId) {
-//         $.ajax({
-//             url: '/' + [pathArray[1], pathArray[2], route, parentId].join('/'),
-//             type: "GET",
-//             dataType: "json",
-//             success: function (data) {
-//                 var firstOption = $('select[name='+child+']').find("option:first-child").text();
-//                 $('select[name='+child+']').empty();
-//                 $('select[name='+child+']').append('<option value=""> '+ firstOption + '</option>');
-//                 $.each(data, function (key, value) {
-//                     $('select[name='+child+']').append('<option value="' + key + '">' + value + '</option>');
-//                 });
-//             }
-//         });
-//     } else {
-//         $('select[name='+child+']').empty();
-//         // var firstOption = $('select[name='+child+']').find("option:first-child").text();
-//         // $('select[name='+child+']').append('<option value=""> '+ firstOption + '</option>');
-//     }
-// }
-
-getSub = function getSub(value, child, route) {
-    route = route == undefined ? 'subMasters' : route;
+getSub = function getSub(value, child, route, nullFirst) {
+    nullFirst = nullFirst === undefined ? true : nullFirst;
+    route = route === undefined ? 'subMasters' : route;
     var pathArray = window.location.pathname.split( '/' );
     var parentId = value;
     if (parentId) {
@@ -222,17 +228,23 @@ getSub = function getSub(value, child, route) {
             url: '/' + [pathArray[1], pathArray[2], route, parentId].join('/'),
             type: "GET",
             success: function (data) {
-                // alert(data);
-                $('select[name='+child+']').empty();
-                if(data.length == 0) $('select[name='+child+']').append('<option value="">&nbsp;</option>');
+                if(nullFirst) {
+                    let childSelect = $('select[name='+child+']');
+                    let firstOption = childSelect.find("option:first-child").text();
+                    childSelect.empty().append('<option value=""> ' + firstOption + '</option>');
+                }else{
+                    $('select[name='+child+']').empty();
+                    if(data.length === 0) $('select[name='+child+']').append('<option value="">&nbsp;</option>');
+                }
+
                 $.each(data, function (key, datas) {
                     $('select[name='+child+']').append('<option value="' + datas.id + '">' + datas.name + '</option>');
                 });
             }
         });
     } else {
-        $('select[name='+child+']').empty();
         var firstOption = $('select[name='+child+']').find("option:first-child").text();
+        $('select[name='+child+']').empty();
         $('select[name='+child+']').append('<option value=""> '+ firstOption + '</option>');
     }
 }
