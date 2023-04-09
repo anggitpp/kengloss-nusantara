@@ -1,10 +1,16 @@
 <?php
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Intervention\Image\Facades\Image;
+use Maatwebsite\Excel\Facades\Excel;
+use RealRashid\SweetAlert\Facades\Alert;
+use Yajra\DataTables\DataTableAbstract;
+use Yajra\DataTables\DataTables;
 
 function setCurrency($value)
 {
@@ -112,7 +118,7 @@ function deleteFile($path): bool
     return true;
 }
 
-function defaultUploadFile($model, $request, $path, $filename,  $fieldName = 'filename'): void
+function defaultUploadFile($model, $request, $path, $filename,  $fieldName = 'filename', $resize = ''): void
 {
     if($request->get('isDelete') == 't'){
         deleteFile($path.$model->$fieldName);
@@ -121,9 +127,9 @@ function defaultUploadFile($model, $request, $path, $filename,  $fieldName = 'fi
         ]);
     }
     if ($request->hasFile($fieldName)) {
-        $resize = false;
+        $resize = $resize ?? false;
         $extension = $request->file($fieldName)->extension();
-        if ($extension == 'png' || $extension == 'jpg' || $extension == 'jpeg') $resize = true;
+        if ($extension == 'png' || $extension == 'jpg' || $extension == 'jpeg') $resize = $resize ?? true;
 
         $resUpload = uploadFile(
             $request->file($fieldName),
@@ -269,7 +275,7 @@ function getInitial($sentences, $length = 2)
     $acronym = '';
 
     foreach ($words as $w) {
-        $acronym .= $w[0];
+        $acronym .= $w[0] ?? '';
     }
 
     return strtoupper(substr($acronym, 0, $length));
@@ -296,6 +302,222 @@ function getParameterMenu(String $pathMenu)
         ->where('t2.target', $modul)
         ->where('t1.target', $menu)
         ->first()->parameter;
+}
+
+function menu_path()
+{
+    $arrURL = explode('/', \Request::url());//GET URL
+    $modul = !empty($arrURL[3]) ? $arrURL[3] : ''; //GET MODUL
+    $menu = !empty($arrURL[4]) ? explode('?', $arrURL[4])[0] ?? '' : ''; //GET MENU WITHOUT PARAM
+
+    return $modul.'/'.$menu;
+}
+
+/**
+ * @throws Exception
+ */
+function generateDatatable($query, $filter , $customFields = [], $isModal = false, $isShowRoute = false, $customPrefix = null, $arrCustomAction = [], $iconShow = '', $editable = true, $deleteable = true)
+{
+    //generate datatables with filter
+    $dataTables = DataTables::of($query);
+    if($filter) $dataTables->filter($filter);
+
+    //generate custom fields
+    foreach ($customFields as $field) {
+        if ($field['type'] == 'date') {
+            $data = function ($model) use ($field) {
+                return $model->{$field['name']} != '0000-00-00' && $model->{$field['name']} != null ? setDate($model->{$field['name']}) : '';
+            };
+        } else if ($field['type'] == 'time') {
+            $data = function ($model) use ($field) {
+                return substr($model->{$field['name']} ?? '', 0, 5);
+            };
+        } else if ($field['type'] == 'masters') {
+            $data = function ($model) use ($field) {
+                return $field['masters'][$model->{$field['name']}] ?? '';
+            };
+        } else if ($field['type'] == 'master_relationship') {
+            $field['master_field'] = $field['master_field'] ?? 'name';
+            $data = function ($model) use ($field) {
+                return $model->{$field['masters']}->{$field['master_field']} ?? $field['null_value'] ?? '';
+            };
+        } else if ($field['type'] == 'multiple_relationship') {
+            $field['master_field'] = $field['master_field'] ?? 'name';
+            $data = function ($model) use ($field) {
+                return $model->{$field['masters']}->{$field['second_masters']}->{$field['master_field']} ?? '';
+            };
+        } else if ($field['type'] == 'filename') {
+            $data = function ($model) use ($field) {
+                return $model->{$field['name']} ? view('components.datatables.download', [
+                    'url' => $model->{$field['name']}
+                ]) : '';
+            };
+        } else if ($field['type'] == 'status') {
+            $data = function ($model) use ($field) {
+                return view('components.views.status', [
+                    'status' => $model->{$field['name']},
+                ]);
+            };
+        } else if ($field['type'] == 'yesorno') {
+            $data = function ($model) use ($field) {
+                return view('components.views.yes-or-no', [
+                    'value' => $model->{$field['name']},
+                ]);
+            };
+        } else if ($field['type'] == 'photo') {
+            $data = function ($model) use ($field) {
+                return view('components.views.photo', [
+                    'photo' => $model->{$field['name']},
+                ]);
+            };
+        } else if ($field['type'] == 'gender') {
+            $data = function ($model) use ($field) {
+                return $model->{$field['name']} == 'M' ? 'Laki-laki' : 'Perempuan';
+            };
+        } else if ($field['type'] == 'currency'){
+            $data = function ($model) use ($field) {
+                return setCurrency($model->{$field['name']}) ?? '';
+            };
+        } else {
+            $data = $field['value'];
+        }
+
+        if(!empty($field['isAdd'])){
+            $dataTables->addColumn($field['name'], $data);
+        }else{
+            $dataTables->editColumn($field['name'], $data);
+        }
+    }
+
+    //generate action
+    $dataTables->addColumn('action', function ($model) use ($isModal, $isShowRoute, $customPrefix, $iconShow, $arrCustomAction, $deleteable, $editable) {
+        $editPrefix = $customPrefix ? 'edit-'.$customPrefix : 'edit';
+        $destroyPrefix = $customPrefix ? 'destroy-'.$customPrefix : 'destroy';
+        $showPrefix = $customPrefix ? 'show-'.$customPrefix : 'show';
+        $arrAction = [
+            'menu_path' => menu_path(),
+            'isModal' => $isModal,
+        ];
+
+        if($editable){
+            $arrAction = array_merge($arrAction, [
+                'url_edit' => route(Str::replace('/', '.', menu_path()) . '.'.$editPrefix, $model->id),
+            ]);
+        }
+
+        if($deleteable){
+            $arrAction = array_merge($arrAction, [
+                'url_destroy' => route(Str::replace('/', '.', menu_path()) . '.'.$destroyPrefix, $model->id),
+            ]);
+        }
+
+        if(!empty($arrCustomAction)){
+            $actions = [];
+            foreach ($arrCustomAction as $action){
+                $ids = [];
+                foreach ($action['ids'] as $id) {
+                    $ids[] = $model->{$id};
+                }
+
+                $actions[] = [
+                    'url' => route(Str::replace('/', '.', menu_path()) . '.'.$action['route'], $ids),
+                    'icon' => $action['icon'],
+                    'class-icon' => $action['class-icon'] ?? 'info',
+                    'isModal' => $action['isModal'] ?? '',
+                    'title' => $action['title'] ?? '',
+                ];
+            }
+
+            $arrAction = array_merge($arrAction, ['customAction' => $actions]);
+        }
+
+        if(!empty($isShowRoute)){
+            $arrAction = array_merge($arrAction, [
+                'url_show' => route(Str::replace('/', '.', menu_path()) . '.'.$showPrefix, $model->id),
+            ]);
+            if(!empty($iconShow)){
+                $arrAction = array_merge($arrAction, [
+                    'icon_show' => $iconShow,
+                ]);
+            }
+        }
+
+        return view('components.views.action', $arrAction);
+    });
+
+    return $dataTables->addIndexColumn()->make();
+}
+
+function submitDataHelper($function, bool $isModal = false, string $route = 'index', array $param = []): JsonResponse|RedirectResponse
+{
+    try {
+        DB::transaction(function () use ($function) {
+            $function();
+        });
+        $status = 'success';
+        $message = 'Data berhasil disimpan';
+    } catch (Exception $e) {
+        $status = 'error';
+        $message = 'Error: ' . $e->getMessage();
+    }
+
+    if($isModal){
+        return response()->json([
+            'success' => $message,
+            'url' => route(Str::replace('/', '.', menu_path()) . '.'.$route, $param)
+        ]);
+    }else{
+        if($status == 'success'){
+            Alert::success('Success', $message);
+        }else{
+            Alert::error('Error', $message);
+        }
+
+        return redirect()->route(Str::replace('/', '.', menu_path()) . '.'.$route, $param);
+    }
+}
+
+function deleteDataHelper($function): RedirectResponse
+{
+    try {
+        DB::transaction(function () use ($function) {
+            $function();
+        });
+
+        $status = 'success';
+        $message = 'Data berhasil dihapus';
+    } catch (Exception $e) {
+
+        $status = 'error';
+        $message = 'Error: ' . $e->getMessage();
+    }
+
+    if($status == 'success'){
+        Alert::success('Success', $message);
+    }else{
+        Alert::error('Error', $message);
+    }
+
+    return redirect()->back();
+}
+
+function importHelper($classImport, $request, $route = 'index')
+{
+    try {
+        if ($request->hasFile('filename')) {
+            Excel::import($classImport, $request->file('filename'));
+
+            return response()->json([
+                'success' => 'Data berhasil diimport',
+                'url' => route(Str::replace('/', '.', menu_path()) . '.'.$route),
+            ]);
+        }
+    } catch (Exception $e) {
+        return response()->json([
+            'success' => 'Gagal ' . $e->getMessage(),
+            'url' => route(Str::replace('/', '.', menu_path()) . '.'.$route),
+        ]);
+    }
 }
 
 ?>
