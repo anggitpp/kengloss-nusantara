@@ -7,7 +7,7 @@
         <x-form.modal-header title="{{ empty($category) ? __('Tambah Kategori') : __('Edit Kategori') }}" />
         <div class="separator mt-2 mb-5 d-flex"></div>
         <div class="card-body pt-0">
-            <x-form.select label="Induk" name="parent_id" :datas="$categories" option="- Pilih Induk -" value="{{ $user->role_id ?? '' }}" />
+            <x-form.select label="Induk" name="parent_id" :datas="$categories" option="- Pilih Induk -" value="{{ $category->parent_id ?? '' }}" />
             <x-form.input label="Nama" placeholder="Masukkan Nama" name="name" value="{{ $category->name ?? '' }}" required/>
             <x-form.textarea label="Keterangan" placeholder="Masukkan Keterangan" name="description" value="{{ $category->description ?? '' }}" />
             <div class="row">
