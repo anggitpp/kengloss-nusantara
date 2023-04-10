@@ -14,12 +14,14 @@
                 </div>
                 <div class="row">
                     <div class="col-md-6">
+                        <x-form.select label="Master Kategori" name="category_id" :datas="$categories" value="{{ $product->category_id ?? '' }}" option="- Pilih Kategori"/>
                         <x-form.input label="Nama" name="name" value="{{ $product->name ?? '' }}" required/>
                         <x-form.datepicker label="Tanggal Produksi" class="w-50" name="production_date" value="{{ $product->production_date ?? '' }}" required/>
                         <x-form.input label="Isi (Liter)" name="volume" class="w-50 text-end" value="{{ $product->volume ?? '' }}"/>
                         <x-form.textarea name="composition" label="Komposisi" value="{{ $product->composition ?? '' }}" />
                     </div>
                     <div class="col-md-6">
+                        <x-form.select label="Master File" name="file_id" :datas="$files" value="{{ $product->file_id ?? '' }}" option="- Pilih Master File"/>
                         <x-form.input label="Batch Number" name="number" value="{{ $product->number ?? '' }}" required/>
                         <x-form.datepicker label="Tanggal Expired" class="w-25" name="expired_date" value="{{ $product->expired_date ?? '' }}" required/>
                         <x-form.input label="Stok Barang" name="stock" class="w-50 text-end" numeric value="{{ $product->stock ?? '' }}"/>

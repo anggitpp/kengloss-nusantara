@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Product;
 use App\Exports\GlobalExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\ProductRequest;
+use App\Models\Product\MasterCategory;
+use App\Models\Product\MasterFile;
 use App\Models\Product\Product;
+use App\Services\Product\MasterCategoryService;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
@@ -24,10 +27,12 @@ class ProductController extends Controller
 {
     public string $productPath;
     public string $qrPath;
+    private MasterCategoryService $masterCategoryService;
 
     public function __construct()
     {
         $this->middleware('auth');
+        $this->masterCategoryService = new MasterCategoryService();
         $this->productPath = '/uploads/product/product/';
         $this->qrPath = '/uploads/product/qr/';
     }
@@ -39,18 +44,31 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return view('products.product.index');
+        $categories = $this->masterCategoryService->getMasterCategories()->pluck('name', 'id')->toArray();
+
+        return view('products.product.index', [
+            'categories' => $categories,
+        ]);
     }
 
     public function data(Request $request){
         if($request->ajax()){
             $filter = $request->get('search')['value'];
-
+            $filterCategory = $request->get('combo_1');
             $sql = Product::orderBy('name');
 
             return DataTables::of($sql)
-                ->filter(function ($query) use ($filter) {
+                ->filter(function ($query) use ($filter, $filterCategory) {
                     if (isset($filter)) $query->where('name', 'like', "%{$filter}%")->orWhere('number', 'like', "%{$filter}%");
+                    if(isset($filterCategory)) $query->where('category_id', $filterCategory);
+                })
+                ->editColumn('category_id', function ($model) {
+                    return $model->category->name ?? '';
+                })
+                ->editColumn('file_id', function ($model) {
+                    return $model->file?->file ? view('components.datatables.download', [
+                        'url' => $model->file->file
+                    ]) : '';
                 })
                 ->editColumn('production_date', function ($model) {
                     return $model->production_date && $model->production_date != '0000-00-00' ? setDate($model->production_date) : '';
@@ -89,7 +107,23 @@ class ProductController extends Controller
      */
     public function create()
     {
-        return view('products.product.form');
+        $categories = MasterCategory::orderBy('name')
+            ->selectRaw("id, CONCAT(code, ' - ', name) as combined_name")
+            ->get()
+            ->pluck('combined_name', 'id')
+            ->toArray();
+
+        $files = MasterFile::orderBy('name')
+            ->selectRaw("id, CONCAT(code, ' - ', name) as combined_name")
+            ->get()
+            ->pluck('combined_name', 'id')
+            ->toArray();
+
+
+        return view('products.product.form', [
+            'categories' => $categories,
+            'files' => $files,
+        ]);
     }
 
     /**
@@ -132,8 +166,12 @@ class ProductController extends Controller
     public function show($id)
     {
         $product = Product::findOrFail($id);
+        $categories = MasterCategory::orderBy('name')->pluck('name', 'id')->toArray();
+        $files = MasterFile::orderBy('name')->pluck('name', 'id')->toArray();
 
         return view('products.product.show', [
+            'categories' => $categories,
+            'files' => $files,
             'product' => $product,
         ]);
     }
@@ -147,8 +185,21 @@ class ProductController extends Controller
     public function edit(int $id)
     {
         $product = Product::findOrFail($id);
+        $categories = MasterCategory::orderBy('name')
+            ->selectRaw("id, CONCAT(code, ' - ', name) as combined_name")
+            ->get()
+            ->pluck('combined_name', 'id')
+            ->toArray();
+
+        $files = MasterFile::orderBy('name')
+            ->selectRaw("id, CONCAT(code, ' - ', name) as combined_name")
+            ->get()
+            ->pluck('combined_name', 'id')
+            ->toArray();
 
         return view('products.product.form', [
+            'categories' => $categories,
+            'files' => $files,
             'product' => $product,
         ]);
     }
