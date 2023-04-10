@@ -46,5 +46,4 @@
     <style>
     </style>
     <x-modal-form />
-    <x-modal-iframe/>
 @endsection
