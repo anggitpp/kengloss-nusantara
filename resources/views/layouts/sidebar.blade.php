@@ -5,8 +5,8 @@
      class="app-sidebar flex-column" data-kt-drawer="true" data-kt-drawer-name="app-sidebar" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="225px" data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle">
     <div class="app-sidebar-logo px-6" id="kt_app_sidebar_logo">
         <div>
-            <img alt="Logo" src="assets/media/logos/sidebar-logo-inventory.png" class="h-60px app-sidebar-logo-default" />
-            <img alt="Logo" src="assets/media/logos/sidebar-logo-inventory-minimize.jpg" class="h-30px app-sidebar-logo-minimize" />
+            <img alt="Logo" src="assets/media/logos/sidebar-logo-kengloss.jpg" class="h-60px w-200px app-sidebar-logo-default" />
+            <img alt="Logo" src="assets/media/logos/sidebar-logo-kengloss-minimize.jpg" class="h-30px w-200px app-sidebar-logo-minimize" />
         </div>
         <div
             id="kt_app_sidebar_toggle" class="app-sidebar-toggle

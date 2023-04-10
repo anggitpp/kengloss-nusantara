@@ -13,7 +13,7 @@ License: For each use you must have a valid license purchased only from above li
 <html lang="en">
 <!--begin::Head-->
 <head><base href="../../../"/>
-    <title>KENGLOSS INDONESIA</title>
+    <title>KENGLOSS-NUSANTARA</title>
     <meta charset="utf-8" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="The most advanced Bootstrap Admin Theme on Themeforest trusted by 100,000 beginners and professionals. Multi-demo, Dark Mode, RTL support and complete React, Angular, Vue, Asp.Net Core, Rails, Spring, Blazor, Django, Flask & Laravel versions. Grab your copy now and get life-time updates for free." />
@@ -64,8 +64,8 @@ License: For each use you must have a valid license purchased only from above li
     <div class="d-flex flex-column flex-lg-row flex-column-fluid">
         <!--begin::Body-->
         <div class="d-flex flex-lg-row-fluid  w-100 w-lg-50 bgi-size-contain bgi-position-center order-1 order-lg-1"
-             style="background-image: url(assets/media/misc/auth-bg-kengloss.png); background-size: contain; background-repeat: no-repeat;background-color: #F6FAFC !important;"
         >
+            <img src="{{ asset('assets/media/misc/auth-bg-kengloss.png') }}">
         </div>
         <div class="d-flex flex-column flex-lg-row-fluid w-100 w-lg-50 p-10 order-2 order-lg-2">
             <!--begin::Form-->
