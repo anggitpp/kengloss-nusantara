@@ -55,7 +55,7 @@ class MasterFileService extends Controller
     public function submit(MasterFileRequest $request, int $id = 0): void
     {
         $fields = [
-            'code' => $request->input('code'),
+            'code' => strtoupper($request->input('code')),
             'name' => $request->input('name'),
             'description' => $request->input('description'),
             'status' => $request->input('status'),
