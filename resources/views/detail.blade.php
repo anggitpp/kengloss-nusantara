@@ -150,46 +150,6 @@ License: For each use you must have a valid license purchased only from above li
                                         <!--end::Card body-->
                                     </div>
                                     <!--end::Thumbnail settings-->
-                                    <!--begin::Status-->
-                                    <div class="card card-flush py-4">
-                                        <!--begin::Card header-->
-                                        <div class="card-header">
-                                            <!--begin::Card title-->
-                                            <div class="card-title">
-                                                <h2>Status</h2>
-                                            </div>
-                                            <!--end::Card title-->
-                                            <!--begin::Card toolbar-->
-                                            <div class="card-toolbar">
-                                                <div class="rounded-circle bg-success w-15px h-15px" id="kt_ecommerce_add_product_status"></div>
-                                            </div>
-                                            <!--begin::Card toolbar-->
-                                        </div>
-                                        <!--end::Card header-->
-                                        <!--begin::Card body-->
-                                        <div class="card-body pt-0">
-                                            <!--begin::Select2-->
-                                            <select class="form-select mb-2" data-control="select2" data-hide-search="true" data-placeholder="Select an option" id="kt_ecommerce_add_product_status_select">
-                                                <option></option>
-                                                <option value="published" selected="selected">Published</option>
-                                                <option value="draft">Draft</option>
-                                                <option value="scheduled">Scheduled</option>
-                                                <option value="inactive">Inactive</option>
-                                            </select>
-                                            <!--end::Select2-->
-                                            <!--begin::Description-->
-                                            <div class="text-muted fs-7">Set the product status.</div>
-                                            <!--end::Description-->
-                                            <!--begin::Datepicker-->
-                                            <div class="d-none mt-10">
-                                                <label for="kt_ecommerce_add_product_status_datepicker" class="form-label">Select publishing date and time</label>
-                                                <input class="form-control" id="kt_ecommerce_add_product_status_datepicker" placeholder="Pick date & time" />
-                                            </div>
-                                            <!--end::Datepicker-->
-                                        </div>
-                                        <!--end::Card body-->
-                                    </div>
-                                    <!--end::Status-->
                                 </div>
                                 <!--end::Aside column-->
                                 <!--begin::Main column-->
@@ -203,7 +163,7 @@ License: For each use you must have a valid license purchased only from above li
                                         <!--end:::Tab item-->
                                         <!--begin:::Tab item-->
                                         <li class="nav-item">
-                                            <a class="nav-link text-active-primary pb-4" data-bs-toggle="tab" href="#kt_ecommerce_add_product_advanced">Advanced</a>
+                                            <a class="nav-link text-active-primary pb-4" data-bs-toggle="tab" href="#kt_ecommerce_add_product_file">File</a>
                                         </li>
                                         <!--end:::Tab item-->
                                     </ul>
@@ -267,39 +227,6 @@ License: For each use you must have a valid license purchased only from above li
                                                                 <!--end::Input-->
                                                             </div>
                                                         </div>
-                                                        <div class="mb-10 fv-row">
-                                                            <!--begin::Label-->
-                                                            <label class="form-label">Stok</label>
-                                                            <!--end::Label-->
-                                                            <!--begin::Input-->
-                                                            <input type="text" name="product_name" class="form-control mb-2" readonly placeholder="Product name" value="{{ $product->stock }}" />
-                                                            <!--end::Input-->
-                                                        </div>
-                                                        <!--end::Input group-->
-                                                        <!--begin::Input group-->
-                                                        <!--end::Input group-->
-                                                    </div>
-                                                    <!--end::Card header-->
-                                                </div>
-                                                <!--end::General options-->
-                                            </div>
-                                        </div>
-                                        <!--end::Tab pane-->
-                                        <!--begin::Tab pane-->
-                                        <div class="tab-pane fade" id="kt_ecommerce_add_product_advanced" role="tab-panel">
-                                            <div class="d-flex flex-column gap-7 gap-lg-10">
-                                                <!--begin::Inventory-->
-                                                <div class="card card-flush py-4">
-                                                    <!--begin::Card header-->
-                                                    <div class="card-header">
-                                                        <div class="card-title">
-                                                            <h2>Advanced</h2>
-                                                        </div>
-                                                    </div>
-                                                    <!--end::Card header-->
-                                                    <!--begin::Card body-->
-                                                    <div class="card-body pt-0">
-                                                        <!--begin::Input group-->
                                                         <div class="mb-10">
                                                             <!--begin::Label-->
                                                             <label class="form-label">Komposisi</label>
@@ -324,6 +251,76 @@ License: For each use you must have a valid license purchased only from above li
                                                         <!--begin::Input group-->
                                                         <!--end::Input group-->
                                                     </div>
+                                                    <!--end::Card header-->
+                                                </div>
+                                                <!--end::General options-->
+                                            </div>
+                                        </div>
+                                        <!--end::Tab pane-->
+                                        <!--begin::Tab pane-->
+                                        <div class="tab-pane fade" id="kt_ecommerce_add_product_file" role="tab-panel">
+                                            <div class="d-flex flex-column gap-7 gap-lg-10">
+                                                <!--begin::Inventory-->
+                                                <div class="card card-flush py-4">
+                                                    <!--begin::Card header-->
+                                                    <style>
+                                                        .aspect-ratio-box {
+                                                            position: relative;
+                                                            width: 95%;
+                                                            height: 800px;
+                                                            padding-bottom: 75%; /* Untuk rasio aspek 4:3, gunakan 75%. Ubah ini jika Anda ingin rasio aspek yang berbeda. */
+                                                            overflow: hidden;
+                                                        }
+
+                                                        .aspect-ratio-box iframe {
+                                                            position: absolute;
+                                                            margin-left: 10px;
+                                                            top: 0;
+                                                            left: 0;
+                                                            right: 0;
+                                                            width: 100%;
+                                                            height: 100%;
+                                                        }
+                                                    </style>
+
+                                                    <?php
+                                                    $tkdn = $product->file?->file;
+                                                    $iframe = "";
+                                                    if($tkdn != null) {
+                                                        $iframe = '<iframe id="iframe" src="https://docs.google.com/gview?url=https://kengloss-nusantara.com/storage/'.$tkdn.'&embedded=true" frameborder="0"></iframe>';
+                                                    }
+                                                    ?>
+
+                                                    <div class="card-header">
+                                                        <div class="card-title">
+                                                            <h2>File TKDN</h2>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body aspect-ratio-box">
+                                                        <?= $iframe ?>
+                                                    </div>
+
+                                                    <script>
+                                                        var myIframe = document.getElementById('myIframe');
+                                                        var maxAttempts = 3;
+                                                        var attempts = 0;
+
+                                                        function checkIframeLoad() {
+                                                            try {
+                                                                var iframeDoc = myIframe.contentDocument || myIframe.contentWindow.document;
+                                                                // Cek apakah iframe kosong
+                                                                if (iframeDoc.body.innerHTML == "" && attempts < maxAttempts) {
+                                                                    attempts++;
+                                                                    myIframe.src = myIframe.src;
+                                                                }
+                                                            } catch (e) {
+                                                                if (attempts < maxAttempts) {
+                                                                    attempts++;
+                                                                    myIframe.src = myIframe.src;
+                                                                }
+                                                            }
+                                                        }
+                                                    </script>
                                                     <!--end::Card header-->
                                                 </div>
                                                 <!--end::Inventory-->
